@@ -157,14 +157,19 @@ def ali2coloured_html(align_file, TA_index, od_genomes_TA, df_tblastn_res):
                         else :
                             aa_within_CDS = False
 
-                        str_html += color_aa(ref_seq[n_index_aa], best_hit.seq[n_index_aa], aa_within_CDS)
-                        n_index_aa += 1
+                        if n_index_aa <= len(ref_seq)-1:
+                            str_html += color_aa(ref_seq[n_index_aa], best_hit.seq[n_index_aa], aa_within_CDS)
+                            n_index_aa += 1
+                        else :
+                            break
             
             elif best_hit.type != "CDS":
                 for aa in best_hit.seq:
-                    if aa != "\n":
+                    if aa != "\n" and n_index_aa <= len(ref_seq)-1 :
                         str_html += color_aa(ref_seq[n_index_aa], best_hit.seq[n_index_aa], False)
                         n_index_aa += 1
+                    else : 
+                        break
              
             str_html += "</span></td></tr>\n"
     

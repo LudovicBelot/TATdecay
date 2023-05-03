@@ -163,13 +163,13 @@ def multi_check_component_integrity(list_TA_index, list_genomes, reference_genom
                                 if tmp_early_stop == "No":
                                     tmp_early_stop = check_early_stop(row[1]['sseq'])
                                 str_tox_ali += f"{' '*len(genome)}\t\t{' '*int(row[1]['qstart'])}{row[1]['sseq']}\n"
-                                
+
                                 tmp_tox_isCDS.append(check_is_part_of_CDS(row[1], len(ref_toxin_seq),f"{outdir}/TATdecay/tmp/tblastn_db/{TA_index}_all_genomes_spots.fasta"))
 
                                 if tmp_frame != row[1]["sframe"]:
                                     d_res[f"{TA_index}_{genome}"]["tox_frameshift"] = "Yes"
                             
-                            tmp_tox_isCDS = (',').join(tmp_tox_isCDS)
+                    tmp_tox_isCDS = (',').join(tmp_tox_isCDS)
 
 
                     d_res[f"{TA_index}_{genome}"]["tox_cov"] = tmp_cov
@@ -288,7 +288,7 @@ def check_is_part_of_CDS(row, len_query, spot_fasta_file):
             CDS_hit_start = start-1+new_start
 
         if tblastn_seq[:3] not in list_codon_start:
-            return f"nucleic({start}:{end})"
+            return f"nucleic({start}:{end})_qcover({row['qstart']}:{row['qend']})"
         
         # now we're looking for a codon stop if we detected a codon start
         #NOTE: we're looking for codon stop from the first codon in the tblastn hit
@@ -296,7 +296,7 @@ def check_is_part_of_CDS(row, len_query, spot_fasta_file):
             tblastn_seq = interval_seq[CDS_hit_start:end + len_query_33percent]
         else :
             #we check here how many codons there are before the end of the contig
-            tblastn_seq = interval_seq[CDS_hit_start:end + (len(interval_seq-1)-end)//3*3]
+            tblastn_seq = interval_seq[CDS_hit_start:end + (len(interval_seq)-1-end)//3*3]
 
         codon2test = [0,3]
         while tblastn_seq[codon2test[0]:codon2test[1]] not in list_codon_stop and codon2test[1] +3 < len(tblastn_seq):
@@ -339,7 +339,7 @@ def check_is_part_of_CDS(row, len_query, spot_fasta_file):
                 break
         
         if reverse_codon(tblastn_seq[-3:]) not in list_codon_start:
-            return f"nucleic({start}:{end})"
+            return f"nucleic({start}:{end})_qcover({row['qstart']}:{row['qend']})"
         
         # if we have a start codon, we're looking for a stop codon
         if end - len_query_33percent-1 >= 0:
