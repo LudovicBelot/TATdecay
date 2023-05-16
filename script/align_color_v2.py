@@ -38,24 +38,25 @@ def ali2color(align_folder, tblastn_res_file, **kwargs):
                     ref_genome = line.split("\t")[0].strip()
                     break
 
-    list_genomes = df_tblastn_res["genome_name"].drop_duplicates().tolist()
+    list_genomes = df_tblastn_res["genome_name"].dropna().drop_duplicates().tolist()
     if order_file != None :
         tmp_list_genomes = copy.deepcopy(list_genomes)
-        list_genomes = [ref_genome]
+        list_genomes = []
         with open(order_file, "r") as f:
             for line in f:
                 if line.strip() in tmp_list_genomes:
                     list_genomes.append(line.strip())
 
     od_genomes = OrderedDict()
-    od_genomes["Reference"] = {"real_name":list_genomes[0]}
     if genome_name_file == None:
+        od_genomes["Reference"] = {"real_name":ref_genome}
         for genome in list_genomes:
             od_genomes[genome] = {"real_name":genome}
     else :
-        df_names_genomes = pd.read_csv(order_file, sep = "\t", comment = "#", names = ["analysis_name", "real_name"])
+        df_names_genomes = pd.read_csv(genome_name_file, sep = "\t", comment = "#", names = ["analysis_name", "real_name"])
+        od_genomes["Reference"] = {"real_name":df_names_genomes.loc[df_names_genomes[df_names_genomes["analysis_name"] == ref_genome].drop_duplicates().index, "real_name"].values[0]}
         for genome in list_genomes:
-            od_genomes[genome] = {"real_name":df_names_genomes.loc[df_names_genomes[df_names_genomes["analysis_name"] == genome].drop_duplicates().index, "real_name"]}
+            od_genomes[genome] = {"real_name":df_names_genomes.loc[df_names_genomes[df_names_genomes["analysis_name"] == genome].drop_duplicates().index, "real_name"].values[0]}
 
     # Now working to create a html file with a coloured coded alignment of both toxin/antitoxin
     for TA_index in list_TAs_index:
@@ -142,12 +143,17 @@ def ali2coloured_html(align_file, TA_index, od_genomes_TA, df_tblastn_res):
                 best_hit = tblastn_hit(genome_values["isCDS"][0], genome_values["seq"][0])
             
             else :
-                str_html += "<td style='line-height:0.3em;'>"+ genome_values["real_name"] +f"<td><span style='color: white'>{ref_seq}</span></td>"+"</td>\n"
+                str_html += "<td style='line-height:0.3em;'><i>"+ genome_values["real_name"] +f"<td><span style='color: white'>{ref_seq}</span></i></td>"+"</td>\n"
                 str_html += "</tr>\n"
                 continue
-
+            
             #html representation
-            str_html += "<td style='line-height:0.3em;'>"+ genome_values["real_name"] + "</td><td>"
+            if genome_values["real_name"] == od_genomes_TA["Reference"]["real_name"]:
+                str_html += "<td style='line-height:0.3em;'><b><i><span style='color: red;'>"+ genome_values["real_name"] + "</span></i></b></td><td>"
+                
+            else:
+                str_html += "<td style='line-height:0.3em;'><i>"+ genome_values["real_name"] + "</i></td><td>"
+
             n_index_aa = 0
             if best_hit.type == "CDS":
                 for aa in best_hit.seq:
